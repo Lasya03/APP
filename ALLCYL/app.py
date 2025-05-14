@@ -21,6 +21,22 @@ yesno_features = ['R bearing','B bearing','Block','Val A','Val B']
 model_key = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
 # Define required_features based on model_key
 required_features = model_features.get(model_key, [])
+optional_features = [f for f in yesno_features if f not in required_features]
+
+# Sidebar message
+st.sidebar.markdown("### 📌 Model Guidance")
+st.sidebar.markdown(f"**Model Selected:** `{model_key}`")
+
+if optional_features:
+    st.sidebar.markdown("**Note:** The following features are *not required* for this model:")
+    for feat in optional_features:
+        st.sidebar.markdown(f"- {feat}")
+    st.sidebar.markdown(
+        "*You can still add costs for them manually by enabling the checkbox and entering a value.*"
+    )
+else:
+    st.sidebar.markdown("*All yes/no features are required for this model.*")
+
 # Load the model
 def load_model(model_key):
     filename = os.path.join(os.path.dirname(__file__), f"{model_key}_model.pkl")
