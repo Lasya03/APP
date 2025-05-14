@@ -75,24 +75,32 @@ with col2:
                 inputs[feat + '_extra_cost'] = float(extra_cost) if extra_cost else 0.0
             except:
                 inputs[feat + '_extra_cost'] = 0.0
-# Create mapping from user-friendly names to model's expected feature names (e.g., 'R bearing' -> 'R bearing_Y')
+# Create a mapping from user-friendly names to model's expected feature names
 model_feature_names = model.feature_names_
+
+# Create a mapping for user-friendly names to model feature names
 input_name_mapping = {
-    fname.replace("_Y", ""): fname
-    for fname in model_feature_names if fname.endswith("_Y")
+    'R bearing': 'R bearing_Y',
+    'B bearing': 'B bearing_Y',
+    'Block': 'Block_Y',
+    'Val A': 'Val A_Y',
+    'Val B': 'Val B_Y'
 }
 
 # Remap inputs dictionary to match model's feature names
 remapped_inputs = {}
 for k, v in inputs.items():
-    mapped_key = input_name_mapping.get(k, k)  # Use mapped key if exists, else original
+    # Map the feature to the model's expected feature name
+    mapped_key = input_name_mapping.get(k, k)  # Use mapped key if it exists, else the original
     remapped_inputs[mapped_key] = v
 
-# Prediction
+# Ensure the remapped inputs include all the required features
 model_input = [remapped_inputs.get(f, 0) for f in model_feature_names]
+
+# Prediction
 predicted_cost = model.predict([model_input])[0]
 
-# Add extra cost manually if any
+# Add manual costs if there are any
 manual_addition = sum(inputs.get(f + "_extra_cost", 0) for f in yesno_features if f not in required_features)
 total_cost = predicted_cost + manual_addition
 
