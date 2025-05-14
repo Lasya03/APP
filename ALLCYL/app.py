@@ -23,6 +23,9 @@ yesno_features = ['R bearing','B bearing','Block','Val A','Val B']
 # Let user select model type
 model_key = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
 
+# Define required_features based on model_key
+required_features = model_features.get(model_key, [])
+
 # Load the model
 def load_model(model_key):
     filename = f"{model_key}_model.pkl"
