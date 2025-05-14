@@ -26,15 +26,13 @@ required_features = model_features.get(model_key, [])
 
 # Load the model
 def load_model(model_key):
-    filename = f"{model_key}_model.pkl"  # ⬅️ no 'models/' prefix!
+    filename = f"{model_key}_model.pkl"  # ✅ no 'models/'!
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
             return pickle.load(f)
     else:
         st.error(f"Model file {filename} not found!")
         return None
-
-
 model = load_model(model_key)
 
 if model is None:
