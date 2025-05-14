@@ -51,12 +51,19 @@ with col1:
                 # Create slider for numerical features
                 val = st.slider(feat, min_value=0.0, max_value=1000.0, value=100.0, step=1.0, key=feat)
                 inputs[feat] = val
-        with col_input:
-            if feat not in required_features:
-                # Optional text input for numerical features
-                val = st.text_input(f"(Optional) {feat}", value="", key=feat)
-                inputs[feat] = float(val) if val else 0.0
+            else:
+                # Disable slider for non-required features
+                st.slider(feat, min_value=0.0, max_value=1000.0, value=100.0, step=1.0, key=feat, disabled=True)
 
+        with col_input:
+            if feat in required_features:
+                # Create input box for numerical features
+                val = st.text_input(f"{feat} (Optional)", value="", key=feat)
+                inputs[feat] = float(val) if val else 0.0
+            else:
+                # Disable input box for non-required features
+                val = st.text_input(f"(Disabled) {feat} (Optional)", value="", key=feat, disabled=True)
+                inputs[feat] = float(val) if val else 0.0
 # Column 2: Yes/No features with dropdown and input box side by side
 with col2:
     st.subheader("Yes/No Inputs")
@@ -68,11 +75,20 @@ with col2:
                 option = st.selectbox(feat, ['No', 'Yes'], key=feat)
                 inputs[feat] = 1 if option == 'Yes' else 0
             else:
+                # Disable dropdown for non-required features
+                option = st.selectbox(feat, ['No', 'Yes'], key=feat, disabled=True)
                 inputs[feat] = 0
         with col_input:
-            if feat not in required_features:
-                # Optional input box for extra cost
+            if feat in required_features:
+                # Optional input box for additional cost
                 extra_cost = st.text_input(f"(Optional) {feat} Cost", value="", key=feat+"_extra")
+                try:
+                    inputs[feat + '_extra_cost'] = float(extra_cost) if extra_cost else 0.0
+                except:
+                    inputs[feat + '_extra_cost'] = 0.0
+            else:
+                # Disable input box for extra cost for non-required features
+                extra_cost = st.text_input(f"(Disabled) {feat} Cost", value="", key=feat+"_extra", disabled=True)
                 try:
                     inputs[feat + '_extra_cost'] = float(extra_cost) if extra_cost else 0.0
                 except:
