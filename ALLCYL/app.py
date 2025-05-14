@@ -32,7 +32,9 @@ def load_model(model_key):
 
 # Sidebar
 st.sidebar.title("Model Selection")
-model_key = st.sidebar.selectbox("Select a model", list(model_features.keys()))
+model_type = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
+model_key = model_type  # this matches keys like 'HD', 'HDE', etc.
+model = load_model(model_key)
 required_features = model_features[model_key]
 model = load_model(model_key)
 
