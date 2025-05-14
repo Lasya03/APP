@@ -103,4 +103,4 @@ predicted_cost = model.predict([model_input])[0]
 manual_addition = sum(inputs.get(f + "_extra_cost", 0) for f in yesno_features if f not in required_features)
 total_cost = predicted_cost + manual_addition
 
-st.markdown(f"### 🔍 Predicted Cost: **₹ {total_cost:.2f}**")
+st.markdown(f"### 🔍 Predicted Cost: **$ {total_cost:.2f}**")
