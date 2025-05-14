@@ -75,9 +75,21 @@ with col2:
                 inputs[feat + '_extra_cost'] = float(extra_cost) if extra_cost else 0.0
             except:
                 inputs[feat + '_extra_cost'] = 0.0
+# Create mapping from user-friendly names to model's expected feature names (e.g., 'R bearing' -> 'R bearing_Y')
+model_feature_names = model.feature_names_
+input_name_mapping = {
+    fname.replace("_Y", ""): fname
+    for fname in model_feature_names if fname.endswith("_Y")
+}
+
+# Remap inputs dictionary to match model's feature names
+remapped_inputs = {}
+for k, v in inputs.items():
+    mapped_key = input_name_mapping.get(k, k)  # Use mapped key if exists, else original
+    remapped_inputs[mapped_key] = v
 
 # Prediction
-model_input = [inputs.get(f, 0) for f in required_features]
+model_input = [remapped_inputs.get(f, 0) for f in model_feature_names]
 predicted_cost = model.predict([model_input])[0]
 
 # Add extra cost manually if any
