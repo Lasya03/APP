@@ -45,7 +45,7 @@ if 'Val B' not in required_features:
     st.info(f"⚠️ For {model_key}, the ML model does not consider 'Val B'. You can manually add its cost by double-clicking its input box.")
 
 # Layout
-st.title(f"{model_key} - Cost Estimator")
+st.title(f"Cylinder Cost Prediction-Columbus")
 col1, col2 = st.columns(2)
 inputs = {}
 
