@@ -43,7 +43,6 @@ col1, col2 = st.columns(2)
 inputs = {}
 # Column 1: Numerical features
 with col1:
-    st.subheader("Numerical Inputs")
     for feat in numerical_features:
         if feat in required_features:
             val = st.slider(feat, min_value=0.0, max_value=1000.0, value=100.0, step=1.0, key=feat)
@@ -51,10 +50,8 @@ with col1:
         else:
             val = st.text_input(f"(Optional) {feat}", value="", key=feat)
             inputs[feat] = float(val) if val else 0.0
-
 # Column 2: Yes/No features
 with col2:
-    st.subheader("Yes/No Inputs")
     for feat in yesno_features:
         if feat in required_features:
             option = st.selectbox(feat, ['No', 'Yes'], key=feat)
