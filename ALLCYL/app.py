@@ -19,22 +19,19 @@ model_features = {
 
 numerical_features = ['Bore','Stroke','RPC','Rod']
 yesno_features = ['R bearing','B bearing','Block','Val A','Val B']
-
 # Let user select model type
 model_key = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
-
 # Define required_features based on model_key
 required_features = model_features.get(model_key, [])
 
 # Load the model
 def load_model(model_key):
-    # Provide the full path to the model
-    model_path = f"models/{model_key}_model.pkl"  # Example path to models folder
-    if os.path.exists(model_path):
-        with open(model_path, 'rb') as f:
+    filename = f"{model_key}_model.pkl"  # ⬅️ no 'models/' prefix!
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
             return pickle.load(f)
     else:
-        st.error(f"Model file {model_path} not found!")
+        st.error(f"Model file {filename} not found!")
         return None
 
 
