@@ -29,14 +29,13 @@ st.sidebar.title("Model Selector")
 model_type = st.sidebar.selectbox("Choose model type", list(model_features.keys()))
 
 # Load model
-def load_model(model_type):
-    model_path = f"{model_type}_model.pkl"
-    if os.path.exists(model_path):
-        with open(model_path, "rb") as f:
-            model = pickle.load(f)
-        return model
+def load_model(model_name):
+    filename = f"{model_name}_model.pkl"
+    if os.path.exists(filename):
+        with open(filename, "rb") as f:
+            return pickle.load(f)
     else:
-        st.error(f"Model file {model_path} not found!")
+        st.error(f"Model file {filename} not found!")
         return None
 
 st.title("Cost Prediction App")
