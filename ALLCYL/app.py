@@ -37,7 +37,7 @@ def load_model(model_name):
     else:
         st.error(f"Model file {filename} not found!")
         return None
-
+model = load_model(model_key)
 st.title("Cost Prediction App")
 st.write(f"### Selected Model: {model_type}")
 
