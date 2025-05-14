@@ -88,7 +88,6 @@ with col1:
             inputs[feat] = float(val_slider)
 # Column 2: Yes/No features with dropdown and input box side by side
 with col2:
-    st.subheader("Yes/No Inputs")
     for feat in yesno_features:
         col_dropdown, col_input, col_enable = st.columns([3, 2, 1])  # Add third column for checkbox
         is_required = feat in required_features
