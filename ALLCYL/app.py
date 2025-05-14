@@ -41,31 +41,26 @@ if 'Val B' not in required_features:
 st.title(f"Cylinder Cost Prediction-Columbus")
 col1, col2 = st.columns(2)
 inputs = {}
-
-# Column 1: Numerical features and sliders
+# Column 1: Numerical features
 with col1:
     st.subheader("Numerical Inputs")
     for feat in numerical_features:
         if feat in required_features:
-            # Create slider for numerical features
             val = st.slider(feat, min_value=0.0, max_value=1000.0, value=100.0, step=1.0, key=feat)
             inputs[feat] = val
         else:
-            # Optional text input for numerical features
             val = st.text_input(f"(Optional) {feat}", value="", key=feat)
             inputs[feat] = float(val) if val else 0.0
 
-# Column 2: Yes/No dropdowns and input boxes side by side
+# Column 2: Yes/No features
 with col2:
     st.subheader("Yes/No Inputs")
     for feat in yesno_features:
         if feat in required_features:
-            # Dropdown for Yes/No features
             option = st.selectbox(feat, ['No', 'Yes'], key=feat)
             inputs[feat] = 1 if option == 'Yes' else 0
         else:
             inputs[feat] = 0
-            # Optional input box for extra cost
             extra_cost = st.text_input(f"(Optional) {feat} Cost", value="", key=feat+"_extra")
             try:
                 inputs[feat + '_extra_cost'] = float(extra_cost) if extra_cost else 0.0
