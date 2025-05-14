@@ -27,7 +27,6 @@ required_features = model_features.get(model_key, [])
 # Load the model
 def load_model(model_key):
     filename = os.path.join(os.path.dirname(__file__), f"{model_key}_model.pkl")
-    st.write("🔍 Looking for model at:", filename)  # Debug
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
             return pickle.load(f)
