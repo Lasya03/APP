@@ -20,22 +20,19 @@ model_features = {
 numerical_features = ['Bore','Stroke','RPC','Rod']
 yesno_features = ['R bearing','B bearing','Block','Val A','Val B']
 
-# Load model
-@st.cache_resource
+# Let user select model type
+model_key = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
+
+# Load the model
 def load_model(model_key):
     filename = f"{model_key}_model.pkl"
     if os.path.exists(filename):
         with open(filename, 'rb') as f:
             return pickle.load(f)
     else:
+        st.error(f"Model file {filename} not found!")
         return None
 
-# Sidebar
-st.sidebar.title("Model Selection")
-model_type = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
-model_key = model_type  # this matches keys like 'HD', 'HDE', etc.
-model = load_model(model_key)
-required_features = model_features[model_key]
 model = load_model(model_key)
 
 if model is None:
