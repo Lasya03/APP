@@ -147,7 +147,7 @@ for k, v in inputs.items():
 # Ensure the remapped inputs include all the required features
 model_input = [remapped_inputs.get(f, 0) for f in model_feature_names]
 # Prediction
-predicted_cost = model.predict([model_input])[0]
+predicted_cost = np.expm1(model.predict([model_input])[0])
 # Add manual costs if there are any
 manual_addition = sum(inputs.get(f + "_extra_cost", 0) for f in yesno_features if f not in required_features)
 total_cost = predicted_cost + manual_addition
