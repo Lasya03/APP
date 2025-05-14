@@ -34,27 +34,20 @@ model = load_model(model_key)
 if model is None:
     st.error(f"Model file {model_key}_model.pkl not found!")
     st.stop()
-# Info message
-if 'Val B' not in required_features:
-    st.info(f"⚠️ For {model_key}, the ML model does not consider 'Val B'. You can manually add its cost by double-clicking its input box.")
 # Layout
 st.title(f"Cylinder Cost Prediction-Columbus")
 col1, col2 = st.columns(2)
 inputs = {}
 # Column 1: Numerical features with slider and input box side by side
 with col1:
-    st.subheader("Numerical Inputs")
     for feat in numerical_features:
         col_slider, col_input, col_enable = st.columns([3, 2, 1])  # Add third column for checkbox
         is_required = feat in required_features
-
         # Checkbox to enable/disable optional feature
         enable = st.session_state.get(f"enable_slider_{feat}", is_required)
-
         with col_enable:
             if not is_required:
                 enable = st.checkbox("", key=f"enable_slider_{feat}", help="Enable input")
-
         with col_slider:
             val_slider = st.slider(
                 feat,
@@ -65,35 +58,29 @@ with col1:
                 key=f"{feat}_slider",
                 disabled=not enable
             )
-
         with col_input:
             val_text = st.text_input(
-                f"{feat} (Optional)",
+                f"{feat}",
                 value="",
                 key=f"{feat}_txt",
                 disabled=not enable
             )
-
         # Prioritize text input if entered, otherwise use slider
         try:
             inputs[feat] = float(val_text) if val_text else float(val_slider)
         except:
             inputs[feat] = float(val_slider)
-
 # Column 2: Yes/No features with dropdown and input box side by side
 with col2:
     st.subheader("Yes/No Inputs")
     for feat in yesno_features:
         col_dropdown, col_input, col_enable = st.columns([3, 2, 1])  # Add third column for checkbox
         is_required = feat in required_features
-
         # Checkbox to enable/disable optional feature
         enable = st.session_state.get(f"enable_dropdown_{feat}", is_required)
-
         with col_enable:
             if not is_required:
                 enable = st.checkbox("", key=f"enable_dropdown_{feat}", help="Enable input")
-
         with col_dropdown:
             option = st.selectbox(
                 feat,
@@ -102,7 +89,6 @@ with col2:
                 disabled=not enable
             )
             inputs[feat] = 1 if option == 'Yes' and enable else 0
-
         with col_input:
             extra_cost = st.text_input(
                 f"{feat} Cost",
@@ -114,7 +100,6 @@ with col2:
                 inputs[feat + '_extra_cost'] = float(extra_cost) if extra_cost else 0.0
             except:
                 inputs[feat + '_extra_cost'] = 0.0
-
 # Create a mapping from user-friendly names to model's expected feature names
 model_feature_names = model.feature_names_
 # Create a mapping for user-friendly names to model feature names
