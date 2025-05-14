@@ -1,6 +1,8 @@
 import streamlit as st
 import pickle
 import os
+import numpy as np
+
 # Feature configuration per model
 model_features = {
     'HD': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
@@ -15,29 +17,10 @@ model_features = {
     'M': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
     'N': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
 }
+
 numerical_features = ['Bore','Stroke','RPC','Rod']
 yesno_features = ['R bearing','B bearing','Block','Val A','Val B']
-# Let user select model type
-model_key = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
-# Define required_features based on model_key
-required_features = model_features.get(model_key, [])
-optional_features = [f for f in yesno_features if f not in required_features]
 
-# Sidebar message
-st.sidebar.markdown("### 📌 Model Guidance")
-st.sidebar.markdown(f"**Model Selected:** `{model_key}`")
-
-if optional_features:
-    st.sidebar.markdown("**Note:** The following features are *not required* for this model:")
-    for feat in optional_features:
-        st.sidebar.markdown(f"- {feat}")
-    st.sidebar.markdown(
-        "*You can still add costs for them manually by enabling the checkbox and entering a value.*"
-    )
-else:
-    st.sidebar.markdown("*All yes/no features are required for this model.*")
-
-# Load the model
 def load_model(model_key):
     filename = os.path.join(os.path.dirname(__file__), f"{model_key}_model.pkl")
     if os.path.exists(filename):
@@ -46,15 +29,28 @@ def load_model(model_key):
     else:
         st.error(f"Model file {filename} not found!")
         return None
+
+st.sidebar.title("Model Selection")
+model_key = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
+required_features = model_features.get(model_key, [])
+optional_features = [f for f in yesno_features if f not in required_features]
+
+st.sidebar.markdown(f"**Model Selected:** `{model_key}`")
+if optional_features:
+    st.sidebar.markdown("**Note:** Optional features for this model:")
+    for feat in optional_features:
+        st.sidebar.markdown(f"- {feat}")
+else:
+    st.sidebar.markdown("*All yes/no features are required for this model.*")
+
 model = load_model(model_key)
 if model is None:
-    st.error(f"Model file {model_key}_model.pkl not found!")
     st.stop()
-# Layout
-st.title(f"Cylinder Cost Prediction-Columbus")
+
+st.title("Cylinder Cost Prediction - Columbus")
 col1, col2 = st.columns(2)
 inputs = {}
-# Define the ranges for each feature
+
 feature_ranges = {
     'Bore': (0.0, 20.0),
     'Stroke': (0.0, 500.0),
@@ -64,25 +60,23 @@ feature_ranges = {
 
 with col1:
     for feat in numerical_features:
-        col_slider, col_input, col_enable = st.columns([3, 2, 1])  # Add third column for checkbox
+        col_slider, col_input, col_enable = st.columns([3, 2, 1])
         is_required = feat in required_features
-        # Checkbox to enable/disable optional feature
         enable = st.session_state.get(f"enable_slider_{feat}", is_required)
-        
+
         with col_enable:
             if not is_required:
                 enable = st.checkbox("", key=f"enable_slider_{feat}", help="Enable input")
 
-        # Get the range for the feature dynamically from feature_ranges
-        min_val, max_val = feature_ranges.get(feat, (0.0, 1000.0))  # Default range if not found
-        
+        min_val, max_val = feature_ranges.get(feat, (0.0, 1000.0))
+
         with col_slider:
             val_slider = st.slider(
                 feat,
                 min_value=min_val,
                 max_value=max_val,
-                value=(min_val + max_val) / 2,  # Default to the middle of the range
-                step=0.1,  # Optional: Set step size if needed
+                value=(min_val + max_val) / 2,
+                step=0.1,
                 key=f"{feat}_slider",
                 disabled=not enable
             )
@@ -94,22 +88,22 @@ with col1:
                 key=f"{feat}_txt",
                 disabled=not enable
             )
-        
-        # Prioritize text input if entered, otherwise use slider
+
         try:
             inputs[feat] = float(val_text) if val_text else float(val_slider)
         except:
             inputs[feat] = float(val_slider)
-# Column 2: Yes/No features with dropdown and input box side by side
+
 with col2:
     for feat in yesno_features:
-        col_dropdown, col_input, col_enable = st.columns([3, 2, 1])  # Add third column for checkbox
+        col_dropdown, col_input, col_enable = st.columns([3, 2, 1])
         is_required = feat in required_features
-        # Checkbox to enable/disable optional feature
         enable = st.session_state.get(f"enable_dropdown_{feat}", is_required)
+
         with col_enable:
             if not is_required:
                 enable = st.checkbox("", key=f"enable_dropdown_{feat}", help="Enable input")
+
         with col_dropdown:
             option = st.selectbox(
                 feat,
@@ -118,6 +112,7 @@ with col2:
                 disabled=not enable
             )
             inputs[feat] = 1 if option == 'Yes' and enable else 0
+
         with col_input:
             extra_cost = st.text_input(
                 f"{feat} Cost",
@@ -129,9 +124,54 @@ with col2:
                 inputs[feat + '_extra_cost'] = float(extra_cost) if extra_cost else 0.0
             except:
                 inputs[feat + '_extra_cost'] = 0.0
-# Create a mapping from user-friendly names to model's expected feature names
-model_feature_names = model.feature_names_
-# Create a mapping for user-friendly names to model feature names
+
+# Add custom features for specific models
+if model_key in ['HD', 'HDE', 'HDI']:
+    inputs['Bore2'] = inputs['Bore'] ** 2
+    inputs['Bore_Rod'] = inputs['Bore'] * inputs['Rod']
+    inputs['RPC_Bore'] = inputs['RPC'] * inputs['Bore']
+    if model_key == 'HDI':
+        inputs['Bore_stroke'] = inputs['Bore'] * inputs['Stroke']
+
+elif model_key == 'LDH':
+    inputs['Bore_stroke'] = inputs['Bore'] * inputs['Stroke']
+    inputs['Bore_Rod'] = inputs['Bore'] * inputs['Rod']
+    inputs['RPC_Bore'] = inputs['RPC'] * inputs['Bore']
+    inputs['Stroke_Rod'] = inputs['Stroke'] * inputs['Rod']
+
+elif model_key == 'MD':
+    inputs['Bore2'] = inputs['Bore'] ** 2
+    inputs['Bore_RPC'] = inputs['Bore'] * inputs['RPC']
+    inputs['Bore_Stroke'] = inputs['RPC'] * inputs['Stroke']
+    inputs['Bore_Rod'] = inputs['Bore'] * inputs['Rod']
+
+elif model_key == 'NR':
+    inputs['RPC2'] = inputs['RPC'] ** 2
+    inputs['Bore_RPC'] = inputs['Bore'] * inputs['RPC']
+    inputs['RPC_Stroke'] = inputs['RPC'] * inputs['Stroke']
+    inputs['Stroke2'] = inputs['Stroke'] ** 2
+    inputs['RPC_Rod'] = inputs['RPC'] * inputs['Rod']
+
+elif model_key == 'H':
+    inputs['RPC2'] = inputs['RPC'] ** 2
+    inputs['Bore_Rod'] = inputs['Bore'] * inputs['Rod']
+    inputs['RPC_Bore'] = inputs['RPC'] * inputs['Bore']
+    inputs['Bore2'] = inputs['Bore'] ** 2
+    inputs['RPC_Rod'] = inputs['RPC'] * inputs['Rod']
+
+elif model_key == 'L':
+    inputs['Bore_RPC'] = inputs['Bore'] * inputs['RPC']
+    inputs['Bore_Stroke'] = inputs['Bore'] * inputs['Stroke']
+    inputs['Bore2'] = inputs['Bore'] ** 2
+    inputs['Stroke_Rod'] = inputs['Stroke'] * inputs['Rod']
+
+elif model_key == 'M':
+    inputs['Bore_Stroke'] = inputs['Bore'] * inputs['Stroke']
+    inputs['Bore_Rod'] = inputs['Bore'] * inputs['Rod']
+    inputs['RPC_Bore'] = inputs['RPC'] * inputs['Bore']
+    inputs['Bore2'] = inputs['Bore'] ** 2
+    inputs['RPC_Rod'] = inputs['RPC'] * inputs['Rod']
+
 input_name_mapping = {
     'R bearing': 'R bearing_Y',
     'B bearing': 'B bearing_Y',
@@ -139,16 +179,15 @@ input_name_mapping = {
     'Val A': 'Val A_Y',
     'Val B': 'Val B_Y'
 }
-# Remap inputs dictionary to match model's feature names
+
 remapped_inputs = {}
 for k, v in inputs.items():
-    mapped_key = input_name_mapping.get(k, k)  # Use mapped key if it exists, else the original
+    mapped_key = input_name_mapping.get(k, k)
     remapped_inputs[mapped_key] = v
-# Ensure the remapped inputs include all the required features
-model_input = [remapped_inputs.get(f, 0) for f in model_feature_names]
-# Prediction
+
+model_input = [remapped_inputs.get(f, 0) for f in model.feature_names_]
 predicted_cost = np.expm1(model.predict([model_input])[0])
-# Add manual costs if there are any
 manual_addition = sum(inputs.get(f + "_extra_cost", 0) for f in yesno_features if f not in required_features)
 total_cost = predicted_cost + manual_addition
+
 st.markdown(f"### 🔍 Predicted Cost: **$ {total_cost:.2f}**")
