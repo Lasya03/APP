@@ -54,26 +54,39 @@ if model is None:
 st.title(f"Cylinder Cost Prediction-Columbus")
 col1, col2 = st.columns(2)
 inputs = {}
-# Column 1: Numerical features with slider and input box side by side
+# Define the ranges for each feature
+feature_ranges = {
+    'Bore': (0.0, 20.0),
+    'Stroke': (0.0, 500.0),
+    'RPC': (0.0, 500.0),
+    'Rod': (0.0, 20.0)
+}
+
 with col1:
     for feat in numerical_features:
         col_slider, col_input, col_enable = st.columns([3, 2, 1])  # Add third column for checkbox
         is_required = feat in required_features
         # Checkbox to enable/disable optional feature
         enable = st.session_state.get(f"enable_slider_{feat}", is_required)
+        
         with col_enable:
             if not is_required:
                 enable = st.checkbox("", key=f"enable_slider_{feat}", help="Enable input")
+
+        # Get the range for the feature dynamically from feature_ranges
+        min_val, max_val = feature_ranges.get(feat, (0.0, 1000.0))  # Default range if not found
+        
         with col_slider:
             val_slider = st.slider(
                 feat,
-                min_value=0.0,
-                max_value=1000.0,
-                value=100.0,
-                step=1.0,
+                min_value=min_val,
+                max_value=max_val,
+                value=(min_val + max_val) / 2,  # Default to the middle of the range
+                step=0.1,  # Optional: Set step size if needed
                 key=f"{feat}_slider",
                 disabled=not enable
             )
+
         with col_input:
             val_text = st.text_input(
                 f"{feat}",
@@ -81,6 +94,7 @@ with col1:
                 key=f"{feat}_txt",
                 disabled=not enable
             )
+        
         # Prioritize text input if entered, otherwise use slider
         try:
             inputs[feat] = float(val_text) if val_text else float(val_slider)
