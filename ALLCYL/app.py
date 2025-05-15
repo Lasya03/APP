@@ -40,10 +40,9 @@ if optional_features:
     st.sidebar.markdown("**Note:** Optional features for this model:")
     for feat in optional_features:
         st.sidebar.markdown(f"- {feat}")
-    st.sidebar.markdown("You can still add costs for them manually by enabling the checkbox and entering a value")
 else:
     st.sidebar.markdown("*All yes/no features are required for this model.*")
-
+st.sidebar.markdown("You can still add costs for them manually by enabling the checkbox and entering a value")
 model = load_model(model_key)
 if model is None:
     st.stop()
