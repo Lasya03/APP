@@ -40,6 +40,7 @@ if optional_features:
     st.sidebar.markdown("**Note:** Optional features for this model:")
     for feat in optional_features:
         st.sidebar.markdown(f"- {feat}")
+    st.sidebar.markdown("You can still add costs for them manually by enabling the checkbox and entering a value")
 else:
     st.sidebar.markdown("*All yes/no features are required for this model.*")
 
@@ -190,4 +191,4 @@ predicted_cost = np.expm1(model.predict([model_input])[0])
 manual_addition = sum(inputs.get(f + "_extra_cost", 0) for f in yesno_features if f not in required_features)
 total_cost = predicted_cost + manual_addition
 
-st.markdown(f"### 🔍 Predicted Cost: **$ {total_cost:.2f}**")
+st.markdown(f"### Predicted Cost: **$ {total_cost:.2f}**")
