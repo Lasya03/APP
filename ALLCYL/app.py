@@ -42,8 +42,10 @@ model = load_model(model_key)
 if model is None:
     st.stop()
     
-st.title("Cylinder Cost Prediction - Columbus")
-
+st.markdown(
+    "<h1 style='white-space: nowrap;'>Cylinder Cost Prediction - Columbus</h1>",
+    unsafe_allow_html=True
+)
 def synced_input(label, min_val, max_val, default):
     col_slider, col_input = st.columns([2, 1])
     with col_slider:
