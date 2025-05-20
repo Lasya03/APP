@@ -5,21 +5,21 @@ import numpy as np
 
 # Feature configuration per model
 model_features = {
-    'HD': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
-    'HDE': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
-    'HDI': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
-    'LD': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
-    'LDH': ['Bore','Stroke','RPC','Rod','Block','Val A'],
-    'MD': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
-    'NR': ['Bore','Stroke','RPC','Rod','R bearing'],
-    'H': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
-    'L': ['Bore','Stroke','RPC','Rod','Block'],
-    'M': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
-    'N': ['Bore','Stroke','RPC','Rod','R bearing','B bearing','Block','Val A'],
+    'HD': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing', 'B bearing', 'Block', 'Val A'],
+    'HDE': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing', 'B bearing', 'Block', 'Val A'],
+    'HDI': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing', 'B bearing', 'Block', 'Val A'],
+    'LD': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing', 'B bearing', 'Block', 'Val A'],
+    'LDH': ['Bore', 'Stroke', 'RPC', 'Rod', 'Block', 'Val A'],
+    'MD': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing', 'B bearing', 'Block', 'Val A'],
+    'NR': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing'],
+    'H': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing', 'B bearing', 'Block', 'Val A'],
+    'L': ['Bore', 'Stroke', 'RPC', 'Rod', 'Block'],
+    'M': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing', 'B bearing', 'Block', 'Val A'],
+    'N': ['Bore', 'Stroke', 'RPC', 'Rod', 'R bearing', 'B bearing', 'Block', 'Val A'],
 }
 
-numerical_features = ['Bore','Stroke','RPC','Rod']
-yesno_features = ['R bearing','B bearing','Block','Val A','Val B']
+numerical_features = ['Bore', 'Stroke', 'RPC', 'Rod']
+yesno_features = ['R bearing', 'B bearing', 'Block', 'Val A', 'Val B']
 
 def load_model(model_key):
     filename = os.path.join(os.path.dirname(__file__), f"{model_key}_model.pkl")
@@ -30,6 +30,7 @@ def load_model(model_key):
         st.error(f"Model file {filename} not found!")
         return None
 
+# Sidebar
 st.sidebar.title("Model Selection")
 model_key = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
 required_features = model_features.get(model_key, [])
@@ -42,15 +43,18 @@ if optional_features:
         st.sidebar.markdown(f"- {feat}")
 else:
     st.sidebar.markdown("*All yes/no features are required for this model.*")
-    
+
+# Load model
 model = load_model(model_key)
 if model is None:
     st.stop()
 
 st.title("Cylinder Cost Prediction - Columbus")
+
 col1, col2 = st.columns(2)
 inputs = {}
 
+# Define input ranges
 feature_ranges = {
     'Bore': (0.0, 20.0),
     'Stroke': (0.0, 500.0),
@@ -58,6 +62,7 @@ feature_ranges = {
     'Rod': (0.0, 20.0)
 }
 
+# Left column - numerical inputs
 with col1:
     for feat in numerical_features:
         col_slider, col_input, col_enable = st.columns([3, 2, 1])
@@ -94,6 +99,7 @@ with col1:
         except:
             inputs[feat] = float(val_slider)
 
+# Right column - yes/no features
 with col2:
     for feat in yesno_features:
         col_dropdown, col_input, col_enable = st.columns([3, 2, 1])
@@ -125,7 +131,7 @@ with col2:
             except:
                 inputs[feat + '_extra_cost'] = 0.0
 
-# Add custom features for specific models
+# Add derived features
 if model_key in ['HD', 'HDE', 'HDI']:
     inputs['Bore2'] = inputs['Bore'] ** 2
     inputs['Bore_Rod'] = inputs['Bore'] * inputs['Rod']
@@ -172,6 +178,7 @@ elif model_key == 'M':
     inputs['Bore2'] = inputs['Bore'] ** 2
     inputs['RPC_Rod'] = inputs['RPC'] * inputs['Rod']
 
+# Remap feature names to match model
 input_name_mapping = {
     'R bearing': 'R bearing_Y',
     'B bearing': 'B bearing_Y',
@@ -185,9 +192,14 @@ for k, v in inputs.items():
     mapped_key = input_name_mapping.get(k, k)
     remapped_inputs[mapped_key] = v
 
+# Prepare final input for model
 model_input = [remapped_inputs.get(f, 0) for f in model.feature_names_]
-predicted_cost = np.expm1(model.predict([model_input])[0])
+
+# Predict cost
+predicted_log_cost = model.predict([model_input])[0]
+predicted_cost = np.expm1(predicted_log_cost)  # Inverse of log1p
 manual_addition = sum(inputs.get(f + "_extra_cost", 0) for f in yesno_features if f not in required_features)
 total_cost = predicted_cost + manual_addition
 
+# Output result
 st.markdown(f"### Predicted Cost: **$ {total_cost:.2f}**")
