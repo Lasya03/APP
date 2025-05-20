@@ -54,18 +54,20 @@ def synced_input(label, min_val, max_val, default):
 
 col1, col2 = st.columns(2)
 inputs = {}
+with st.expander("🔢 Numerical Inputs", expanded=True):
+    col1a, col1b = st.columns(2)
+    with col1a:
+        bore = synced_input("Bore", 0, 300, 100)
+        stroke = synced_input("Stroke", 0, 300, 50)
+    with col1b:
+        rpc = synced_input("RPC", 0, 100, 20)
+        rod = synced_input("Rod", 0, bore, min(30, bore))
 
-with col1:
-    bore = synced_input("Bore", 0, 300, 100)
-    stroke = synced_input("Stroke", 0, 300, 50)
-    rpc = synced_input("RPC", 0, 100, 20)
-    rod = synced_input("Rod", 0, bore, min(30, bore))
-with col2:
+with st.expander("⚙️ Configuration Options", expanded=True):
     r_bearing = st.radio("R bearing", ["No", "Yes"])
     b_bearing = st.radio("B bearing", ["No", "Yes"])
     block = st.radio("Block", ["No", "Yes"])
     val_a = st.radio("Val A", ["No", "Yes"])
-    
 
 # Add inputs to dictionary
 inputs['Bore'] = bore
