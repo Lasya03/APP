@@ -66,11 +66,11 @@ with st.expander("🔢 Numerical Inputs", expanded=True):
 with st.expander("⚙️ Configuration Options", expanded=True):
     col2a, col2b = st.columns(2)
     with col2a:
-    r_bearing = st.radio("R bearing", ["No", "Yes"])
-    b_bearing = st.radio("B bearing", ["No", "Yes"])
+        r_bearing = st.radio("R bearing", ["No", "Yes"])
+        b_bearing = st.radio("B bearing", ["No", "Yes"])
     with col2b:
-    block = st.radio("Block", ["No", "Yes"])
-    val_a = st.radio("Val A", ["No", "Yes"])
+        block = st.radio("Block", ["No", "Yes"])
+        val_a = st.radio("Val A", ["No", "Yes"])
 
 # Add inputs to dictionary
 inputs['Bore'] = bore
