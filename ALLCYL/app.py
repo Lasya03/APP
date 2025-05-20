@@ -65,7 +65,7 @@ with st.expander("🔢 Numerical Inputs", expanded=True):
         rpc = synced_input("RPC", 0, 100, 20)
         rod = synced_input("Rod", 0, bore, min(30, bore))
 
-with st.expander("⚙️ Configuration Options", expanded=True):
+with st.expander("⚙️ Categorical Options", expanded=True):
     col2a, col2b = st.columns(2)
     with col2a:
         r_bearing = st.radio("R bearing", ["No", "Yes"])
