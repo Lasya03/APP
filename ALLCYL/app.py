@@ -2,11 +2,6 @@ import streamlit as st
 import pickle
 import os
 import numpy as np
-st.set_page_config(
-    page_title="Cylinder Cost Prediction",
-    layout="centered",
-    initial_sidebar_state="expanded",
-)
 
 # Feature configuration per model
 model_features = {
@@ -37,54 +32,100 @@ def load_model(model_key):
 
 st.sidebar.title("Model Selection")
 model_key = st.sidebar.selectbox("Select Model Type", list(model_features.keys()))
+required_features = model_features.get(model_key, [])
+optional_features = [f for f in yesno_features if f not in required_features]
+
+st.sidebar.markdown(f"**Model Selected:** {model_key}")
+if optional_features:
+    st.sidebar.markdown("**Note:** Optional features for this model:")
+    for feat in optional_features:
+        st.sidebar.markdown(f"- {feat}")
+else:
+    st.sidebar.markdown("*All yes/no features are required for this model.*")
 
 model = load_model(model_key)
 if model is None:
     st.stop()
-    
-st.markdown(
-    "<h1 style='white-space: nowrap;'>Cylinder Cost Prediction - Columbus</h1>",
-    unsafe_allow_html=True
-)
-def synced_input(label, min_val, max_val, default):
-    col_slider, col_input = st.columns([2, 1])
-    with col_slider:
-        slider_val = st.slider(label, min_value=min_val, max_value=max_val, value=default, key=label+"slider")
-    with col_input:
-        input_val = st.number_input(f"{label} value", min_value=min_val, max_value=max_val, value=slider_val, key=label+"input")
-    return input_val if input_val != slider_val else slider_val
 
+st.title("Cylinder Cost Prediction - Columbus")
 col1, col2 = st.columns(2)
 inputs = {}
-with st.expander("🔢 Numerical Inputs", expanded=True):
-    col1a, col1b = st.columns(2)
-    with col1a:
-        bore = synced_input("Bore", 0, 300, 100)
-        stroke = synced_input("Stroke", 0, 300, 50)
-    with col1b:
-        rpc = synced_input("RPC", 0, 100, 20)
-        rod = synced_input("Rod", 0, bore, min(30, bore))
 
-with st.expander("⚙️ Categorical Options", expanded=True):
-    col2a, col2b = st.columns(2)
-    with col2a:
-        r_bearing = st.radio("R bearing", ["No", "Yes"])
-        b_bearing = st.radio("B bearing", ["No", "Yes"])
-    with col2b:
-        block = st.radio("Block", ["No", "Yes"])
-        val_a = st.radio("Val A", ["No", "Yes"])
+feature_ranges = {
+    'Bore': (0.0, 20.0),
+    'Stroke': (0.0, 500.0),
+    'RPC': (0.0, 500.0),
+    'Rod': (0.0, 20.0)
+}
 
-# Add inputs to dictionary
-inputs['Bore'] = bore
-inputs['Stroke'] = stroke
-inputs['RPC'] = rpc
-inputs['Rod'] = rod
-inputs['R bearing'] = 1 if r_bearing == 'Yes' else 0
-inputs['B bearing'] = 1 if b_bearing == 'Yes' else 0
-inputs['Val A'] = 1 if val_a == 'Yes' else 0
-inputs['Block'] = 1 if block == 'Yes' else 0
+with col1:
+    for feat in numerical_features:
+        col_slider, col_input, col_enable = st.columns([3, 2, 1])
+        is_required = feat in required_features
+        enable = st.session_state.get(f"enable_slider_{feat}", is_required)
 
-# Custom feature engineering
+        with col_enable:
+            if not is_required:
+                enable = st.checkbox("", key=f"enable_slider_{feat}", help="Enable input")
+
+        min_val, max_val = feature_ranges.get(feat, (0.0, 1000.0))
+
+        with col_slider:
+            val_slider = st.slider(
+                feat,
+                min_value=min_val,
+                max_value=max_val,
+                value=(min_val + max_val) / 2,
+                step=0.1,
+                key=f"{feat}_slider",
+                disabled=not enable
+            )
+
+        with col_input:
+            val_text = st.text_input(
+                f"{feat}",
+                value="",
+                key=f"{feat}_txt",
+                disabled=not enable
+            )
+
+        try:
+            inputs[feat] = float(val_text) if val_text else float(val_slider)
+        except:
+            inputs[feat] = float(val_slider)
+
+with col2:
+    for feat in yesno_features:
+        col_dropdown, col_input, col_enable = st.columns([3, 2, 1])
+        is_required = feat in required_features
+        enable = st.session_state.get(f"enable_dropdown_{feat}", is_required)
+
+        with col_enable:
+            if not is_required:
+                enable = st.checkbox("", key=f"enable_dropdown_{feat}", help="Enable input")
+
+        with col_dropdown:
+            option = st.selectbox(
+                feat,
+                ['No', 'Yes'],
+                key=f"{feat}_dropdown",
+                disabled=not enable
+            )
+            inputs[feat] = 1 if option == 'Yes' and enable else 0
+
+        with col_input:
+            extra_cost = st.text_input(
+                f"{feat} Cost",
+                value="",
+                key=f"{feat}_extra",
+                disabled=not enable
+            )
+            try:
+                inputs[feat + '_extra_cost'] = float(extra_cost) if extra_cost else 0.0
+            except:
+                inputs[feat + '_extra_cost'] = 0.0
+
+# Add custom features for specific models
 if model_key in ['HD', 'HDE', 'HDI']:
     inputs['Bore2'] = inputs['Bore'] ** 2
     inputs['Bore_Rod'] = inputs['Bore'] * inputs['Rod']
@@ -131,7 +172,6 @@ elif model_key == 'M':
     inputs['Bore2'] = inputs['Bore'] ** 2
     inputs['RPC_Rod'] = inputs['RPC'] * inputs['Rod']
 
-# Remap yes/no feature names to match training column names
 input_name_mapping = {
     'R bearing': 'R bearing_Y',
     'B bearing': 'B bearing_Y',
@@ -142,10 +182,12 @@ input_name_mapping = {
 
 remapped_inputs = {}
 for k, v in inputs.items():
-    remapped_inputs[input_name_mapping.get(k, k)] = v
+    mapped_key = input_name_mapping.get(k, k)
+    remapped_inputs[mapped_key] = v
 
-# Ensure all features expected by model are present
 model_input = [remapped_inputs.get(f, 0) for f in model.feature_names_]
-# Predict and show result
 predicted_cost = np.expm1(model.predict([model_input])[0])
-st.markdown(f"### Predicted Cost: **$ {predicted_cost:.2f}**")
+manual_addition = sum(inputs.get(f + "_extra_cost", 0) for f in yesno_features if f not in required_features)
+total_cost = predicted_cost + manual_addition
+
+st.markdown(f"### 🔍 Predicted Cost: **$ {total_cost:.2f}**")
